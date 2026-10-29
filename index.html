@@ -1,0 +1,858 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyTimer - Student Productivity</title>
+
+<style>
+:root {
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --text: #20243a;
+  --muted: #70758a;
+  --primary: #6558e8;
+  --border: #e5e7f0;
+  --green: #16a085;
+}
+body.dark {
+  --bg: #171927;
+  --card: #232638;
+  --text: #f3f4ff;
+  --muted: #b5b8cc;
+  --border: #3a3e53;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: .2s;
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 5%;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.logo { font-size: 23px; font-weight: bold; color: var(--primary); }
+.header-actions { display: flex; gap: 10px; }
+.container {
+  max-width: 1100px;
+  margin: 25px auto;
+  padding: 0 18px;
+}
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+nav button, .btn {
+  padding: 10px 15px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--text);
+}
+nav button.active, .primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.card {
+  background: var(--card);
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin-bottom: 18px;
+}
+h1 { margin-top: 0; font-size: 27px; }
+h2 { margin-top: 0; font-size: 20px; }
+p, .muted { color: var(--muted); }
+label {
+  display: block;
+  font-size: 14px;
+  margin: 12px 0 6px;
+  color: var(--muted);
+}
+input, select {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+.settings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.timer {
+  font-size: clamp(48px, 8vw, 76px);
+  font-weight: bold;
+  text-align: center;
+  margin: 24px 0;
+  letter-spacing: 2px;
+}
+.mode-buttons, .controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+}
+.status {
+  text-align: center;
+  min-height: 24px;
+  margin: 16px 0;
+}
+.stat-number {
+  font-size: 30px;
+  font-weight: bold;
+  margin: 8px 0;
+  color: var(--primary);
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.stat-box {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px;
+  min-width: 0;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.item:last-child { border-bottom: none; }
+.item span { flex: 1; }
+.item input[type="checkbox"] { width: auto; }
+.item.done span {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.small {
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 7px;
+}
+.hidden { display: none !important; }
+.progress {
+  height: 9px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+.progress div {
+  height: 100%;
+  width: 0%;
+  background: var(--green);
+  transition: width .3s;
+}
+footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+}
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
+  .settings, .stat-grid { grid-template-columns: 1fr; }
+  header { padding: 15px; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="logo">📚 StudyTimer</div>
+  <div class="header-actions">
+    <button class="btn" id="themeBtn">🌙 Dark Mode</button>
+  </div>
+</header>
+
+<div class="container">
+  <nav>
+    <button class="active" data-page="home">🏠 Home</button>
+    <button data-page="todo">✅ To-do List</button>
+    <button data-page="stats">📊 Statistics</button>
+    <button data-page="about">ℹ️ About</button>
+  </nav>
+
+  <section id="home">
+    <h1>Welcome to StudyTimer! 👋</h1>
+    <p>Focus on one subject at a time and build better study habits.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>⏱️ Focus Timer</h2>
+
+        <div class="mode-buttons">
+          <button class="btn primary" id="studyMode">📖 Study</button>
+          <button class="btn" id="breakMode">☕ Break</button>
+        </div>
+
+        <label for="subject">Select subject</label>
+        <select id="subject">
+          <option>Mathematics</option>
+          <option>Physics</option>
+          <option>Chemistry</option>
+          <option>Computer Science</option>
+          <option>Java Programming</option>
+          <option>Data Science</option>
+          <option>English</option>
+          <option>Biology</option>
+          <option>Other</option>
+        </select>
+
+        <div class="settings">
+          <div>
+            <label for="studyLength">Study minutes</label>
+            <input id="studyLength" type="number" min="1" max="180" value="25">
+          </div>
+          <div>
+            <label for="breakLength">Break minutes</label>
+            <input id="breakLength" type="number" min="1" max="60" value="5">
+          </div>
+          <div>
+            <label for="dailyGoal">Daily goal (min)</label>
+            <input id="dailyGoal" type="number" min="1" max="1440" value="120">
+          </div>
+        </div>
+
+        <div class="timer" id="timer">25:00</div>
+
+        <div class="controls">
+          <button class="btn primary" id="startBtn">▶ Start</button>
+          <button class="btn" id="pauseBtn">Ⅱ Pause</button>
+          <button class="btn" id="resetBtn">↻ Reset</button>
+          <button class="btn" id="stopAlarmBtn">🔕 Stop Alarm</button>
+        </div>
+
+        <p class="status" id="status" role="status" aria-live="polite">
+          Ready to focus!
+        </p>
+
+        <p class="muted" style="text-align:center">
+          Keep this browser tab open for the timer and alarm.
+        </p>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>📈 Today's Progress</h2>
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="muted">Study minutes</div>
+              <div class="stat-number" id="todayMinutes">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="muted">Sessions</div>
+              <div class="stat-number" id="todaySessions">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="muted">Goal</div>
+              <div class="stat-number" id="goalPercent">0%</div>
+            </div>
+          </div>
+          <div class="progress"><div id="goalProgress"></div></div>
+          <p id="goalMessage">Every minute counts. Start studying!</p>
+        </div>
+
+        <div class="card">
+          <h2>🕒 Recent Sessions</h2>
+          <div id="recentSessions"><p>No sessions completed yet.</p></div>
+        </div>
+
+        <div class="card">
+          <h2>💡 Study Tip</h2>
+          <p id="studyTip">Put your phone away and focus on one task at a time.</p>
+          <button class="btn" id="tipBtn">Another Tip</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="todo" class="hidden">
+    <h1>✅ My To-do List</h1>
+    <p>Write down the tasks you want to complete today.</p>
+    <div class="card">
+      <form id="todoForm" style="display:flex;gap:10px">
+        <input id="todoInput" placeholder="Enter a study task..." required maxlength="150">
+        <button class="btn primary" type="submit">Add</button>
+      </form>
+      <div id="todoList" style="margin-top:15px"></div>
+      <p id="todoCount"></p>
+    </div>
+  </section>
+
+  <section id="stats" class="hidden">
+    <h1>📊 Study Statistics</h1>
+    <div class="stat-grid">
+      <div class="card">
+        <div class="muted">Total study hours</div>
+        <div class="stat-number" id="totalHours">0</div>
+      </div>
+      <div class="card">
+        <div class="muted">Completed study sessions</div>
+        <div class="stat-number" id="totalSessions">0</div>
+      </div>
+      <div class="card">
+        <div class="muted">Different subjects</div>
+        <div class="stat-number" id="subjectCount">0</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📚 Time by Subject</h2>
+      <div id="subjectStats"><p>No study data yet.</p></div>
+    </div>
+    <div class="card">
+      <h2>🗓️ Recent Study History</h2>
+      <div id="allSessions"><p>No study sessions yet.</p></div>
+    </div>
+  </section>
+
+  <section id="about" class="hidden">
+    <h1>ℹ️ About StudyTimer</h1>
+    <div class="card">
+      <h2>What is StudyTimer?</h2>
+      <p>StudyTimer is a simple student productivity web application that helps students focus, manage breaks, and track study progress.</p>
+      <h2>Features</h2>
+      <ul>
+        <li>Study and break countdown timers</li>
+        <li>Repeating sound alarm when the timer finishes</li>
+        <li>Optional browser notification</li>
+        <li>Daily study goals and statistics</li>
+        <li>To-do list with saved tasks</li>
+        <li>Dark mode</li>
+        <li>Local storage to save data in the browser</li>
+        <li>Works without a database or internet connection</li>
+      </ul>
+      <p><strong>Privacy:</strong> Your study data is stored in this browser on this device.</p>
+      <button class="btn" id="notificationBtn">🔔 Enable Notifications</button>
+      <button class="btn" id="clearDataBtn">Clear Saved Data</button>
+      <p id="aboutStatus" role="status"></p>
+    </div>
+  </section>
+</div>
+
+<footer>StudyTimer © 2026 | Built with HTML, CSS and JavaScript</footer>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+const STORAGE_KEY = "studyTimerProjectData";
+
+function today() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function loadData() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && Array.isArray(saved.sessions) && Array.isArray(saved.todos)) {
+      return {
+        sessions: saved.sessions,
+        todos: saved.todos,
+        dark: Boolean(saved.dark),
+        goal: Number(saved.goal) || 120
+      };
+    }
+  } catch (error) {
+    console.warn("Could not load saved data:", error);
+  }
+  return { sessions: [], todos: [], dark: false, goal: 120 };
+}
+
+let data = loadData();
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.warn("Could not save data:", error);
+    $("status").textContent = "Your browser could not save the latest changes.";
+  }
+}
+
+function numberValue(id, fallback, max) {
+  const value = Number($(id).value);
+  if (!Number.isFinite(value) || value < 1) return fallback;
+  return Math.min(Math.floor(value), max);
+}
+
+let mode = "study";
+let remaining = 25 * 60;
+let interval = null;
+let endAt = null;
+let finished = false;
+let audioContext = null;
+let alarmInterval = null;
+
+function displayTimer() {
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  $("timer").textContent =
+    String(minutes).padStart(2, "0") + ":" +
+    String(seconds).padStart(2, "0");
+  document.title = `${$("timer").textContent} - StudyTimer`;
+}
+
+function lengthForMode() {
+  if (mode === "study") {
+    return numberValue("studyLength", 25, 180) * 60;
+  }
+  return numberValue("breakLength", 5, 60) * 60;
+}
+
+function stopTimer() {
+  if (interval !== null) {
+    clearInterval(interval);
+    interval = null;
+  }
+  endAt = null;
+}
+
+async function prepareAudio() {
+  try {
+    const AudioContextClass =
+      window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+      $("status").textContent =
+        "This browser does not support the sound alarm.";
+      return;
+    }
+
+    if (!audioContext) audioContext = new AudioContextClass();
+
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+  } catch (error) {
+    console.warn("Audio could not start:", error);
+  }
+}
+
+function playBeep() {
+  if (!audioContext || audioContext.state !== "running") return;
+
+  try {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = 880;
+
+    gain.gain.setValueAtTime(0.001, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.25, audioContext.currentTime + 0.03
+    );
+    gain.gain.exponentialRampToValueAtTime(
+      0.001, audioContext.currentTime + 0.4
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.4);
+  } catch (error) {
+    console.warn("Could not play alarm:", error);
+  }
+}
+
+function stopAlarm() {
+  if (alarmInterval !== null) {
+    clearInterval(alarmInterval);
+    alarmInterval = null;
+  }
+  if ($("stopAlarmBtn")) {
+    $("stopAlarmBtn").textContent = "🔕 Stop Alarm";
+  }
+}
+
+function startAlarm() {
+  stopAlarm();
+  playBeep();
+  alarmInterval = setInterval(playBeep, 1000);
+  $("stopAlarmBtn").textContent = "🔕 Stop Alarm (Ringing)";
+}
+
+function sendNotification(title, body) {
+  if ("Notification" in window &&
+      Notification.permission === "granted") {
+    try {
+      new Notification(title, { body });
+    } catch (error) {
+      console.warn("Notification could not be shown:", error);
+    }
+  }
+}
+
+function finishTimer() {
+  stopTimer();
+  remaining = 0;
+  displayTimer();
+
+  if (!finished) {
+    if (mode === "study") {
+      data.sessions.push({
+        subject: $("subject").value,
+        minutes: numberValue("studyLength", 25, 180),
+        date: today(),
+        type: "Study"
+      });
+    } else {
+      data.sessions.push({
+        subject: $("subject").value,
+        minutes: numberValue("breakLength", 5, 60),
+        date: today(),
+        type: "Break"
+      });
+    }
+
+    finished = true;
+    save();
+    render();
+    startAlarm();
+  }
+
+  if (mode === "study") {
+    $("status").textContent =
+      "🔔 Study time completed! Time to take a break.";
+    sendNotification(
+      "Study session completed!",
+      "Great work! Take a short break."
+    );
+  } else {
+    $("status").textContent =
+      "🔔 Break time completed! Ready to study again?";
+    sendNotification(
+      "Break time finished!",
+      "Your break is over. Ready to focus again?"
+    );
+  }
+}
+
+function chooseMode(newMode) {
+  stopTimer();
+  stopAlarm();
+  mode = newMode;
+  finished = false;
+  remaining = lengthForMode();
+
+  $("studyMode").classList.toggle("primary", mode === "study");
+  $("breakMode").classList.toggle("primary", mode === "break");
+  $("status").textContent =
+    mode === "study" ? "Ready to focus!" : "Ready for a break!";
+
+  displayTimer();
+}
+
+$("studyMode").addEventListener("click", () => chooseMode("study"));
+$("breakMode").addEventListener("click", () => chooseMode("break"));
+
+$("startBtn").addEventListener("click", async () => {
+  await prepareAudio();
+
+  if (interval !== null) return;
+
+  stopAlarm();
+
+  if (remaining <= 0 || finished) {
+    remaining = lengthForMode();
+    finished = false;
+    displayTimer();
+  }
+
+  endAt = Date.now() + remaining * 1000;
+  $("status").textContent = "Timer running. Stay focused!";
+
+  interval = setInterval(() => {
+    remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    displayTimer();
+
+    if (remaining === 0) finishTimer();
+  }, 250);
+});
+
+$("pauseBtn").addEventListener("click", () => {
+  if (interval === null) return;
+
+  remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+  stopTimer();
+  displayTimer();
+  $("status").textContent = "Timer paused.";
+});
+
+$("resetBtn").addEventListener("click", () => {
+  stopTimer();
+  stopAlarm();
+  finished = false;
+  remaining = lengthForMode();
+  displayTimer();
+  $("status").textContent = "Timer reset.";
+});
+
+$("studyLength").addEventListener("change", () => {
+  if (mode === "study" && interval === null) {
+    remaining = lengthForMode();
+    finished = false;
+    displayTimer();
+  }
+});
+
+$("breakLength").addEventListener("change", () => {
+  if (mode === "break" && interval === null) {
+    remaining = lengthForMode();
+    finished = false;
+    displayTimer();
+  }
+});
+
+$("dailyGoal").value = data.goal;
+$("dailyGoal").addEventListener("change", () => {
+  data.goal = numberValue("dailyGoal", 120, 1440);
+  $("dailyGoal").value = data.goal;
+  save();
+  render();
+});
+
+$("themeBtn").addEventListener("click", () => {
+  data.dark = !data.dark;
+  document.body.classList.toggle("dark", data.dark);
+  $("themeBtn").textContent = data.dark ? "☀️ Light Mode" : "🌙 Dark Mode";
+  save();
+});
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function renderTodos() {
+  const list = $("todoList");
+  list.innerHTML = "";
+
+  if (data.todos.length === 0) {
+    list.innerHTML = "<p>No tasks yet. Add your first task above!</p>";
+  }
+
+  data.todos.forEach(todo => {
+    const row = document.createElement("div");
+    row.className = "item" + (todo.done ? " done" : "");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = Boolean(todo.done);
+    checkbox.setAttribute("aria-label", "Mark task complete");
+    checkbox.addEventListener("change", () => {
+      todo.done = checkbox.checked;
+      save();
+      renderTodos();
+    });
+
+    const label = document.createElement("span");
+    label.textContent = todo.text;
+
+    const remove = document.createElement("button");
+    remove.className = "small";
+    remove.textContent = "Delete";
+    remove.addEventListener("click", () => {
+      data.todos = data.todos.filter(item => item.id !== todo.id);
+      save();
+      renderTodos();
+    });
+
+    row.append(checkbox, label, remove);
+    list.appendChild(row);
+  });
+
+  const completed = data.todos.filter(todo => todo.done).length;
+  $("todoCount").textContent =
+    `${completed} of ${data.todos.length} tasks completed.`;
+}
+
+$("todoForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const text = $("todoInput").value.trim();
+  if (!text) return;
+
+  data.todos.push({
+    id: Date.now() + Math.random(),
+    text,
+    done: false
+  });
+
+  $("todoInput").value = "";
+  save();
+  renderTodos();
+});
+
+function render() {
+  const studies = data.sessions.filter(s => s.type === "Study");
+  const breaks = data.sessions.filter(s => s.type === "Break");
+  const todaysStudies = studies.filter(s => s.date === today());
+  const todayMinutes = todaysStudies.reduce((sum, s) => sum + s.minutes, 0);
+  const goal = numberValue("dailyGoal", 120, 1440);
+  const percent = Math.min(100, Math.round((todayMinutes / goal) * 100));
+
+  $("todayMinutes").textContent = todayMinutes;
+  $("todaySessions").textContent = todaysStudies.length;
+  $("goalPercent").textContent = percent + "%";
+  $("goalProgress").style.width = percent + "%";
+  $("goalMessage").textContent = percent >= 100
+    ? "🎉 Daily study goal completed! Great job!"
+    : `${goal - todayMinutes} more minutes to reach your daily goal.`;
+
+  $("totalHours").textContent =
+    (studies.reduce((sum, s) => sum + s.minutes, 0) / 60).toFixed(1);
+  $("totalSessions").textContent = studies.length;
+  $("subjectCount").textContent = new Set(studies.map(s => s.subject)).size;
+
+  const recent = data.sessions.slice().reverse().slice(0, 5);
+  $("recentSessions").innerHTML = recent.length
+    ? recent.map(s =>
+        `<div class="item"><span>${escapeHTML(s.subject)} — ${s.type}</span>` +
+        `<span>${s.minutes} min</span></div>`
+      ).join("")
+    : "<p>No sessions completed yet.</p>";
+
+  const bySubject = {};
+  studies.forEach(s => {
+    bySubject[s.subject] = (bySubject[s.subject] || 0) + s.minutes;
+  });
+
+  const subjects = Object.entries(bySubject).sort((a, b) => b[1] - a[1]);
+
+  $("subjectStats").innerHTML = subjects.length
+    ? subjects.map(([name, minutes]) =>
+        `<div class="item"><span>${escapeHTML(name)}</span>` +
+        `<strong>${minutes} min</strong></div>`
+      ).join("")
+    : "<p>No study data yet.</p>";
+
+  $("allSessions").innerHTML = data.sessions.length
+    ? data.sessions.slice().reverse().slice(0, 20).map(s =>
+        `<div class="item"><span>${escapeHTML(s.date)} — ` +
+        `${escapeHTML(s.subject)} (${s.type})</span>` +
+        `<strong>${s.minutes} min</strong></div>`
+      ).join("")
+    : "<p>No study sessions yet.</p>";
+
+  renderTodos();
+}
+
+const tips = [
+  "Put your phone away and focus on one task at a time.",
+  "Break a big chapter into smaller, manageable tasks.",
+  "Take short breaks to refresh your mind.",
+  "Keep water nearby while you study.",
+  "Review your notes after finishing a topic.",
+  "Start with the subject that needs the most attention.",
+  "Practice questions instead of only reading notes."
+];
+
+$("tipBtn").addEventListener("click", () => {
+  const current = $("studyTip").textContent;
+  let next = current;
+  while (next === current && tips.length > 1) {
+    next = tips[Math.floor(Math.random() * tips.length)];
+  }
+  $("studyTip").textContent = next;
+});
+
+document.querySelectorAll("nav button").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach(b =>
+      b.classList.toggle("active", b === button)
+    );
+
+    document.querySelectorAll("main section");
+    ["home", "todo", "stats", "about"].forEach(id => {
+      $(id).classList.toggle("hidden", id !== button.dataset.page);
+    });
+  });
+});
+
+$("notificationBtn").addEventListener("click", async () => {
+  if (!("Notification" in window)) {
+    $("aboutStatus").textContent =
+      "Browser notifications are not supported. The sound alarm still works.";
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    $("aboutStatus").textContent = permission === "granted"
+      ? "Notifications enabled!"
+      : "Notifications were not enabled. The sound alarm can still work.";
+  } catch (error) {
+    $("aboutStatus").textContent =
+      "Could not request notification permission in this browser.";
+  }
+});
+
+$("clearDataBtn").addEventListener("click", () => {
+  const confirmed = confirm(
+    "Delete all saved study sessions, tasks, and preferences? This cannot be undone."
+  );
+  if (!confirmed) return;
+
+  stopTimer();
+  stopAlarm();
+
+  data = { sessions: [], todos: [], dark: false, goal: 120 };
+  localStorage.removeItem(STORAGE_KEY);
+
+  document.body.classList.remove("dark");
+  $("themeBtn").textContent = "🌙 Dark Mode";
+  $("dailyGoal").value = 120;
+  $("studyLength").value = 25;
+  $("breakLength").value = 5;
+
+  chooseMode("study");
+  render();
+  $("aboutStatus").textContent = "Saved data cleared.";
+});
+
+document.body.classList.toggle("dark", data.dark);
+$("themeBtn").textContent = data.dark ? "☀️ Light Mode" : "🌙 Dark Mode";
+
+remaining = lengthForMode();
+displayTimer();
+render();
+</script>
+</body>
+</html>
